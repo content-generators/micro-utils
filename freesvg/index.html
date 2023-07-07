@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Free SVG - Image Capture</title>
+    <script
+      crossorigin
+      src="https://unpkg.com/react@16/umd/react.development.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"
+    ></script>
+    <script
+      type="application/javascript"
+      src="https://unpkg.com/babel-standalone@6.26.0/babel.js"
+    ></script>
+  </head>
+
+  <body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+      const rootElement = document.getElementById("root");
+
+      const ImageList = ({ searchTerm, onDataChange, token }) => {
+        const [images, setImages] = React.useState([]);
+        const [selectedImage, setSelectedImage] = React.useState("");
+
+        const getImageLinks = async () => {
+          const links = await fetch(
+            `https://reserve.freesvg.org/api/v1/search?query=${searchTerm}`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          )
+            .then((res) => res.json())
+            .then((res) => {
+              return res.data.map((image) => {
+                return `https://freesvg.org/img/${image.thumb}`;
+              });
+            });
+
+          setImages(links);
+        };
+
+        React.useEffect(() => {
+          getImageLinks();
+        }, []);
+
+        React.useEffect(() => {
+          onDataChange({
+            name: searchTerm,
+            image: selectedImage,
+          });
+        }, [selectedImage]);
+
+        return (
+          <div>
+            <h1>{searchTerm}</h1>
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "no-wrap",
+                overflowX: "auto",
+                margin: "20px",
+              }}
+            >
+              {images.map((url) => {
+                return (
+                  <img
+                    onClick={() => {
+                      setSelectedImage(url);
+                    }}
+                    src={url}
+                    style={{
+                      flex: "0 0 auto",
+                      width: "auto",
+                      height: "150px",
+                      maxWidth: "100%",
+                      marginRight: "10px",
+                      padding: "6px",
+                      border: selectedImage == url ? "1px solid black" : "",
+                    }}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        );
+      };
+
+      function App() {
+        const [data, setData] = React.useState([]);
+        const [token, setToken] = React.useState(null);
+
+        const [list, setList] = React.useState("");
+        const [username, setUsername] = React.useState("");
+        const [password, setPassword] = React.useState("");
+
+        const handleSubmit = (e) => {
+          e.preventDefault();
+          getToken(username, password).then((tk) => {
+            setToken(tk);
+          });
+          setData(JSON.parse(list))
+        };
+
+        const getToken = async (email, password) => {
+          return fetch(`https://reserve.freesvg.org/api/v1/auth/login`, {
+            method: "POST",
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              email,
+              password,
+            }),
+          })
+            .then((res) => res.json())
+            .then((res) => {
+              return res.token;
+            });
+        };
+
+        React.useEffect(() => {
+          getToken().then((tk) => {
+            setToken(tk);
+          });
+        }, []);
+
+        return token ? (
+          <div>
+           
+            {JSON.parse(list).map((name, index) => {
+              return (
+                <ImageList
+                  token={token}
+                  searchTerm={name}
+                  onDataChange={(item) => {
+                    setData(data.with(index, item));
+                  }}
+                />
+              );
+            })}
+
+            <span>{JSON.stringify(data, null, 4)}</span>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} style={{fontSize: "large", padding:"20px", textAlign:"center"}}>
+            <div style={{padding:"20px"}}>
+              <label htmlFor="username">Username</label>
+              <br/>
+              <input
+                id="username"
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+              />
+            </div>
+            <div style={{padding:"20px"}}>
+              <label htmlFor="password">Password</label>
+              <br/>
+              <input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+            <div style={{padding:"20px"}}>
+              <label htmlFor="List Of Words">List Of Words</label>
+              <br/>
+              <textarea
+                id="list"
+                type="textarea"
+                rows={30}
+                value={list}
+                onChange={(e) => setList(e.target.value)}
+              />
+            </div>
+            <button style={{padding:"20px", fontSize:"large"}} type="submit">Login</button>
+          </form>
+        );
+      }
+
+      ReactDOM.render(<App />, rootElement);
+    </script>
+  </body>
+</html>
