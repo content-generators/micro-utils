@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+  <title>Riddle Manager</title>
+  <script crossorigin src="https://unpkg.com/react@16/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script>
+  <script type="application/javascript" src="https://unpkg.com/babel-standalone@6.26.0/babel.js"></script>
+</head>
+
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const rootElement = document.getElementById("root");
+
+    function App() {
+      const [data, setData] = React.useState([]);
+      const [videoLink, setVideoLink] = React.useState("");
+      const [imageLink, setImageLink] = React.useState("");
+      const [apiKey, setApiKey] = React.useState("");
+
+      const getData = async () => {
+        return fetch(`https://api.api-ninjas.com/v1/riddles?limit=20`, {
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            "X-Api-Key": apiKey
+          }
+        })
+          .then((res) => res.json())
+          .then((res) => {
+            const mappedData = res.map(item => {
+              return {
+                messages: [
+                  { voice: "Arthur", content: item.question },
+                  { voice: "Ruth", content: item.answer }
+                ]
+              }
+            })
+            setData(mappedData)
+            return res;
+          });
+      };
+
+      const handleSubmit = (e) => {
+        e.preventDefault();
+        getData()
+      };
+
+      return (data && data.length) ? <div>
+
+        <div>
+          <label for="image-link" class="block text-sm font-semibold leading-6 text-gray-900">Image Link</label>
+          <div class="mt-2.5">
+            <input onChange={(event) => {
+              setImageLink(event.target.value)
+            }} type="text" name="image-link" id="image-link" class="block w-full rounded-md border-0 px-3.5 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" />
+          </div>
+        </div>
+
+        <div>
+          <label for="video-link" class="block text-sm font-semibold leading-6 text-gray-900">Video Link</label>
+          <div class="mt-2.5">
+            <input onChange={(event) => {
+              setVideoLink(event.target.value)
+            }} type="text" name="video-link" id="video-link" class="block w-full rounded-md border-0 px-3.5 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" />
+          </div>
+        </div>
+
+        <pre><code>{JSON.stringify(data.map(item => {
+          return {
+            ...item,
+            background: {
+              image: imageLink,
+              video: videoLink
+            }
+          }
+        }), null, 4)}</code></pre>
+      </div> : <form onSubmit={handleSubmit} style={{ fontSize: "large", padding: "20px", textAlign: "center" }}>
+        <div style={{ padding: "20px" }}>
+          <label htmlFor="apiKey">API Key</label>
+          <br />
+          <input
+            id="apiKey"
+            type="text"
+            value={apiKey}
+            onChange={(e) => setApiKey(e.target.value)}
+          />
+        </div>
+        <button style={{ padding: "20px", fontSize: "large" }} type="submit">Get Data</button>
+      </form>
+    }
+
+    ReactDOM.render(<App />, rootElement);
+  </script>
+</body>
+
+</html>
