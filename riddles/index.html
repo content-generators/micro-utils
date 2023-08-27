@@ -36,7 +36,7 @@
             const mappedData = res.map(item => {
               return {
                 messages: [
-                  { voice: "Arthur", content: item.question },
+                  { voice: "Arthur", content: item.question, delay: 5 },
                   { voice: "Ruth", content: item.answer }
                 ]
               }
